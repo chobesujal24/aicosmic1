@@ -36,7 +36,7 @@ function readData(): DataStore {
     }
     memoryCache = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
     return memoryCache;
-  } catch {
+  } catch (e) {
     memoryCache = defaultData;
     return memoryCache;
   }
