@@ -15,10 +15,13 @@ const firebaseConfig = {
 // Initialize Firebase (prevent duplicate initialization)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-export const firebaseAuth = getAuth(app);
-export const firebaseDb = getFirestore(app);
-export const googleProvider = new GoogleAuthProvider();
-export const githubProvider = new GithubAuthProvider();
+// Only initialize client SDKs on the browser to avoid SSR WebSocket crashes on Vercel
+const isClient = typeof window !== "undefined";
+
+export const firebaseAuth = isClient ? getAuth(app) : ({} as any);
+export const firebaseDb = isClient ? getFirestore(app) : ({} as any);
+export const googleProvider = isClient ? new GoogleAuthProvider() : ({} as any);
+export const githubProvider = isClient ? new GithubAuthProvider() : ({} as any);
 
 // Admin emails - only these accounts can see the admin panel
 export const ADMIN_EMAILS = [

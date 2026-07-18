@@ -1,12 +1,4 @@
-import {
-  doc,
-  setDoc,
-  updateDoc,
-  increment,
-  serverTimestamp,
-  getDoc,
-} from "firebase/firestore";
-import { firebaseDb } from "./firebase";
+import { adminDb } from "./firebase-admin";
 
 /**
  * Track user activity in Firestore for admin dashboard.
@@ -23,25 +15,25 @@ export async function trackUserActivity({
   ip: string | null;
   location: string;
 }) {
-  if (!userId || !email) return;
+  if (!userId || !email || !adminDb) return;
 
   try {
-    const userRef = doc(firebaseDb, "user_tracking", userId);
-    const userDoc = await getDoc(userRef);
+    const userRef = adminDb.collection("user_tracking").doc(userId);
+    const userDoc = await userRef.get();
 
-    if (userDoc.exists()) {
-      await updateDoc(userRef, {
-        lastActive: serverTimestamp(),
-        totalMessages: increment(1),
+    if (userDoc.exists) {
+      await userRef.update({
+        lastActive: new Date(),
+        totalMessages: FirebaseAdminIncrement(1),
         ip: ip || "Unknown",
         location: location || "Unknown",
         email,
       });
     } else {
-      await setDoc(userRef, {
+      await userRef.set({
         email,
-        createdAt: serverTimestamp(),
-        lastActive: serverTimestamp(),
+        createdAt: new Date(),
+        lastActive: new Date(),
         totalMessages: 1,
         chatCount: 0,
         ip: ip || "Unknown",
@@ -55,11 +47,11 @@ export async function trackUserActivity({
 }
 
 export async function incrementChatCount(userId: string) {
-  if (!userId) return;
+  if (!userId || !adminDb) return;
   try {
-    const userRef = doc(firebaseDb, "user_tracking", userId);
-    await updateDoc(userRef, {
-      chatCount: increment(1),
+    const userRef = adminDb.collection("user_tracking").doc(userId);
+    await userRef.update({
+      chatCount: FirebaseAdminIncrement(1),
     });
   } catch (error) {
     console.error("Chat count tracking error:", error);
@@ -73,11 +65,14 @@ export type AdminSettings = {
 };
 
 export async function getAdminSettings(): Promise<AdminSettings> {
+  if (!adminDb) {
+    return { defaultLimit: 10, bannedIps: [], bannedEmails: [] };
+  }
   try {
-    const settingsRef = doc(firebaseDb, "admin_settings", "config");
-    const settingsDoc = await getDoc(settingsRef);
-    if (settingsDoc.exists()) {
-      const data = settingsDoc.data();
+    const settingsRef = adminDb.collection("admin_settings").doc("config");
+    const settingsDoc = await settingsRef.get();
+    if (settingsDoc.exists) {
+      const data = settingsDoc.data()!;
       return {
         defaultLimit: data.defaultLimit ?? 10,
         bannedIps: data.bannedIps || [],
@@ -95,12 +90,19 @@ export async function getAdminSettings(): Promise<AdminSettings> {
 }
 
 export async function updateAdminSettings(settings: Partial<AdminSettings>) {
+  if (!adminDb) return false;
   try {
-    const settingsRef = doc(firebaseDb, "admin_settings", "config");
-    await setDoc(settingsRef, settings, { merge: true });
+    const settingsRef = adminDb.collection("admin_settings").doc("config");
+    await settingsRef.set(settings, { merge: true });
     return true;
   } catch (error) {
     console.error("Failed to update admin settings:", error);
     return false;
   }
+}
+
+function FirebaseAdminIncrement(n: number) {
+  // Safe helper to get FieldValue.increment without messing up imports
+  const admin = require('firebase-admin');
+  return admin.firestore.FieldValue.increment(n);
 }
