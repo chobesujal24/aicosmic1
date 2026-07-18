@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18008851483"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'AW-18008851483');
+  </script>
+  <script>
+    const t = localStorage.getItem('theme');
+    if (t === 'light' || (t === 'system' && !window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/qyvera-logo.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Qyvera AI – Multi-Model AI Assistant for Chat, Code & Image Generation</title>
+  <meta name="description"
+    content="Qyvera AI is a powerful multi-model AI assistant that lets you chat, code, generate images and switch models instantly. Access GPT-4, Claude, Gemini & 20+ AI models in one place." />
+  <meta name="keywords"
+    content="best multi model ai assistant, ai with multiple models, ai model switcher platform, chatgpt claude alternative, ai for coding and image generation, AI assistant, Qyvera AI" />
+  <meta name="author" content="Qyvera AI" />
+  <link rel="canonical" href="https://qyvera.web.app/" />
+  <meta name="robots" content="index, follow">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://qyvera.web.app/" />
+  <meta property="og:title" content="Qyvera AI – Multi-Model AI Assistant for Chat, Code & Image Generation" />
+  <meta property="og:description"
+    content="Qyvera AI is a powerful multi-model AI assistant. Chat, code, generate images and switch between 20+ AI models instantly." />
+  <meta property="og:image" content="https://qyvera.web.app/qyvera-logo.png" />
+  <meta property="og:site_name" content="Qyvera AI" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://qyvera.web.app/" />
+  <meta property="twitter:title" content="Qyvera AI – Multi-Model AI Assistant for Chat, Code & Image Generation" />
+  <meta property="twitter:description"
+    content="Qyvera AI is a powerful multi-model AI assistant. Chat, code, generate images and switch between 20+ AI models instantly." />
+  <meta property="twitter:image" content="https://qyvera.web.app/qyvera-logo.png" />
+
+  <!-- Schema.org Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Qyvera AI",
+    "url": "https://qyvera.web.app",
+    "logo": "https://qyvera.web.app/logo.png",
+    "description": "Qyvera AI is a multi-model AI workspace for chat, coding, and productivity.",
+    "sameAs": [
+      "https://x.com/qyveraAI",
+      "https://reddit.com/user/qyvera",
+      "https://medium.com/@qyvera",
+      "https://youtube.com/@qyvera"
+    ]
+  }
+  </script>
+
+  <script type="module" crossorigin src="/assets/index-BodClwEc.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-6bkKyPiO.css">
+
+</head>
+
+<body>
+  <div id="root"></div>
+  <!-- Puter SDK for AI capabilities - loaded after DOM is ready -->
+  <script src="https://js.puter.com/v2/"></script>
+
+  <script>
+    document.addEventListener('click', function(e) {
+      const clickable = e.target.closest('button, a');
+      
+      if (clickable) {
+        const href = clickable.getAttribute('href') || '';
+        const isFooter = clickable.closest('footer');
+        const isSocial = href.includes('x.com') || href.includes('twitter') || href.includes('reddit') || href.includes('medium') || href.includes('youtube') || href.includes('mailto:');
+        const isInternal = href.startsWith('#');
+        
+        // Ignore clicks on footer links, social media links, and internal page scrolling links
+        if (isFooter || isSocial || isInternal) {
+          return;
+        }
+        
+        // For all other buttons and CTAs, redirect to the Next.js app!
+        e.preventDefault();
+        e.stopPropagation();
+        window.location.href = 'https://qyvera.vercel.app';
+      }
+    }, true); // use capturing phase
+
+    // Safely style ONLY the mock chat container to match the sleek dark UI
+    setInterval(() => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      const generateBtn = buttons.find(b => b.innerText && b.innerText.toLowerCase().includes('generate'));
+      
+      if (generateBtn && !generateBtn.dataset.styled) {
+        generateBtn.dataset.styled = 'true';
+        
+        // Find the main chat container (it usually has rounded borders)
+        let container = generateBtn.closest('.rounded-2xl') || generateBtn.closest('div[class*="border"]');
+        
+        if (container) {
+          // Apply sleek dark mode styles safely via inline styles
+          container.style.setProperty('background-color', '#18181b', 'important');
+          container.style.setProperty('border-color', '#27272a', 'important');
+          container.style.setProperty('box-shadow', '0 20px 40px -10px rgba(0,0,0,0.8)', 'important');
+          container.style.setProperty('border-width', '1px', 'important');
+          container.style.setProperty('border-radius', '1.5rem', 'important');
+          
+          // Style the text/input area inside it
+          const textElements = container.querySelectorAll('div, span, input');
+          textElements.forEach(el => {
+            if (window.getComputedStyle(el).color === 'rgb(0, 0, 0)' || el.classList.contains('text-foreground')) {
+               el.style.setProperty('color', '#fafafa', 'important');
+            }
+          });
+        }
+        
+        // Style the generate button to look premium
+        generateBtn.style.setProperty('background-color', '#fafafa', 'important');
+        generateBtn.style.setProperty('color', '#09090b', 'important');
+        generateBtn.style.setProperty('font-weight', '600', 'important');
+        generateBtn.style.setProperty('border', 'none', 'important');
+      }
+    }, 200);
+  </script>
+</body>
+
+</html>

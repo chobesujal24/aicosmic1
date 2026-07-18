@@ -1,0 +1,11 @@
+{
+  "hosting": {
+    "site": "qyvera",
+    "source": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}
