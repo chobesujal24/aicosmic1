@@ -3,12 +3,10 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { cookies } from 'next/headers';
 
-if (!getApps().length) {
+if (!getApps().length && process.env.FIREBASE_SERVICE_ACCOUNT) {
   try {
     initializeApp({
-      credential: process.env.FIREBASE_SERVICE_ACCOUNT 
-        ? cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) 
-        : applicationDefault(),
+      credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
       projectId: "aicosmic-8ef8b" // Fallback project ID if needed
     });
   } catch (error) {
@@ -16,8 +14,8 @@ if (!getApps().length) {
   }
 }
 
-export const adminDb = getFirestore();
-export const adminAuth = getAuth();
+export const adminDb = process.env.FIREBASE_SERVICE_ACCOUNT ? getFirestore() : null;
+export const adminAuth = process.env.FIREBASE_SERVICE_ACCOUNT ? getAuth() : null;
 
 export async function auth() {
   const cookieStore = await cookies();
