@@ -27,18 +27,18 @@ const defaultData: DataStore = {
 let memoryCache: DataStore | null = null;
 
 function readData(): DataStore {
-  if (memoryCache) return memoryCache;
+  if (memoryCache) return memoryCache as DataStore;
   try {
     if (!fs.existsSync(DATA_FILE)) {
       memoryCache = defaultData;
       writeData(defaultData);
-      return memoryCache;
+      return memoryCache as DataStore;
     }
     memoryCache = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-    return memoryCache;
+    return memoryCache as DataStore;
   } catch (e) {
     memoryCache = defaultData;
-    return memoryCache;
+    return memoryCache as DataStore;
   }
 }
 
