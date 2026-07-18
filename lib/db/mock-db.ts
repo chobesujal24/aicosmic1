@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import type { User, Chat, DBMessage, Vote, Document, Suggestion, Stream } from './schema';
 
-const DATA_FILE = path.join(process.cwd(), '.data.json');
+const DATA_FILE = path.join(process.env.VERCEL ? '/tmp' : process.cwd(), '.data.json');
 
 type DataStore = {
   users: User[];
@@ -24,20 +24,31 @@ const defaultData: DataStore = {
   streams: [],
 };
 
+let memoryCache: DataStore | null = null;
+
 function readData(): DataStore {
-  if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(defaultData, null, 2));
-    return defaultData;
-  }
+  if (memoryCache) return memoryCache;
   try {
-    return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+    if (!fs.existsSync(DATA_FILE)) {
+      memoryCache = defaultData;
+      writeData(defaultData);
+      return memoryCache;
+    }
+    memoryCache = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+    return memoryCache;
   } catch {
-    return defaultData;
+    memoryCache = defaultData;
+    return memoryCache;
   }
 }
 
 function writeData(data: DataStore) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+  memoryCache = data;
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+  } catch (e) {
+    // Ignore Vercel read-only filesystem errors
+  }
 }
 
 export const db = {
