@@ -1,7 +1,7 @@
-import { getApps, initializeApp, cert, applicationDefault } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getApps, initializeApp, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-import { cookies } from 'next/headers';
+import { getFirestore } from 'firebase-admin/firestore';
+import { cookies } from "next/headers";
 
 if (!getApps().length && process.env.FIREBASE_SERVICE_ACCOUNT) {
   try {
@@ -10,12 +10,12 @@ if (!getApps().length && process.env.FIREBASE_SERVICE_ACCOUNT) {
       projectId: "aicosmic-8ef8b" // Fallback project ID if needed
     });
   } catch (error) {
-    console.error('Firebase Admin initialization error', error);
+    console.error('Firebase Admin initialization error:', error);
   }
 }
 
-export const adminDb = process.env.FIREBASE_SERVICE_ACCOUNT ? getFirestore() : null;
-export const adminAuth = process.env.FIREBASE_SERVICE_ACCOUNT ? getAuth() : null;
+export const adminDb = getApps().length > 0 ? getFirestore() : null;
+export const adminAuth = getApps().length > 0 ? getAuth() : null;
 
 export async function auth() {
   const cookieStore = await cookies();
