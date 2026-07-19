@@ -25,7 +25,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     appNewScrollHandler: true,
-    cachedNavigations: true,
+    cachedNavigations: false,
     inlineCss: true,
     prefetchInlining: true,
     turbopackFileSystemCacheForDev: true,
