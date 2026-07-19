@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   description: "Qyvera AI — Your Intelligent Assistant powered by top AI models.",
   metadataBase: new URL("https://qyvera.ai"),
   title: "Qyvera AI",
+  verification: {
+    google: "3M-VqMlqQTlIcmLzo5vYKuJQTl2xc-2RWJRGSNtcadI",
+  },
 };
 
 export const viewport = {
