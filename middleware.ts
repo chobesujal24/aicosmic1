@@ -10,7 +10,10 @@ export function middleware(request: NextRequest) {
   }
   
   if (token && isLoginPage) {
-    return NextResponse.redirect(new URL('/', request.url));
+    // We intentionally do NOT redirect to '/' here.
+    // If the server-side auth() verification fails, it redirects the user to /login.
+    // If we redirect them back to / here, it creates an infinite redirect loop that crashes the app.
+    // Let the client-side AuthProvider handle the redirect if the user is truly authenticated.
   }
 
   return NextResponse.next();
