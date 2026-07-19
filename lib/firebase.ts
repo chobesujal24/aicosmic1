@@ -19,7 +19,7 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
 const isClient = typeof window !== "undefined";
 
 export const firebaseAuth = isClient ? getAuth(app) : ({} as any);
-export const firebaseDb = isClient ? getFirestore(app) : ({} as any);
+export const firebaseDb = getFirestore(app);
 export const googleProvider = isClient ? new GoogleAuthProvider() : ({} as any);
 export const githubProvider = isClient ? new GithubAuthProvider() : ({} as any);
 

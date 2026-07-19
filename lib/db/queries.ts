@@ -1,207 +1,250 @@
-import type { User, Chat, DBMessage, Vote, Document, Suggestion } from './schema';
-import { db } from './mock-db';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit as firestoreLimit,
+  startAfter,
+  endBefore,
+  writeBatch,
+} from "firebase/firestore";
+import { firebaseDb } from "../firebase";
+import type { User, Chat, DBMessage, Vote, Document, Suggestion } from "./schema";
+
+// Helper to convert Firestore timestamps
+function parseDoc<T>(doc: any): T {
+  const data = doc.data();
+  if (data.createdAt && data.createdAt.toDate) {
+    data.createdAt = data.createdAt.toDate();
+  }
+  if (data.updatedAt && data.updatedAt.toDate) {
+    data.updatedAt = data.updatedAt.toDate();
+  }
+  return data as T;
+}
 
 export async function getUser(email: string): Promise<User[]> {
-  const data = db.get();
-  return data.users.filter(u => u.email === email);
+  const usersRef = collection(firebaseDb, "users");
+  const q = query(usersRef, where("email", "==", email));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(parseDoc<User>);
 }
 
 export async function createUser(email: string, password?: string) {
-  const data = db.get();
+  const id = Math.random().toString(36).substring(7);
   const newUser: User = {
-    id: Math.random().toString(36).substring(7),
+    id,
     email,
     emailVerified: false,
     isAnonymous: false,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
-  data.users.push(newUser);
-  db.set(data);
+  await setDoc(doc(firebaseDb, "users", id), newUser);
 }
 
 export async function saveChat({ id, userId, title }: { id: string; userId: string; title: string }) {
-  const data = db.get();
-  const newChat: Chat = {
+  const chatRef = doc(firebaseDb, "chats", id);
+  const newChat = {
     id,
     userId,
     title,
     visibility: 'private',
     createdAt: new Date(),
   };
-  const existingIndex = data.chats.findIndex(c => c.id === id);
-  if (existingIndex > -1) {
-    data.chats[existingIndex] = { ...data.chats[existingIndex], ...newChat };
-  } else {
-    data.chats.push(newChat);
-  }
-  db.set(data);
+  await setDoc(chatRef, newChat, { merge: true });
 }
 
 export async function deleteChatById({ id }: { id: string }) {
-  const data = db.get();
-  data.chats = data.chats.filter(c => c.id !== id);
-  data.messages = data.messages.filter(m => m.chatId !== id);
-  data.votes = data.votes.filter(v => v.chatId !== id);
-  db.set(data);
+  await deleteDoc(doc(firebaseDb, "chats", id));
+  
+  // Clean up related data (batch)
+  const batch = writeBatch(firebaseDb);
+  
+  const messagesQ = query(collection(firebaseDb, "messages"), where("chatId", "==", id));
+  const mSnap = await getDocs(messagesQ);
+  mSnap.docs.forEach((d) => batch.delete(d.ref));
+  
+  const votesQ = query(collection(firebaseDb, "votes"), where("chatId", "==", id));
+  const vSnap = await getDocs(votesQ);
+  vSnap.docs.forEach((d) => batch.delete(d.ref));
+  
+  await batch.commit();
 }
 
 export async function getChatsByUserId({ id, limit, startingAfter, endingBefore }: { id: string; limit?: number; startingAfter?: string | null; endingBefore?: string | null }) {
-  const data = db.get();
-  let chats = data.chats.filter(c => c.userId === id).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  if (limit) chats = chats.slice(0, limit);
-  return chats;
+  const chatsRef = collection(firebaseDb, "chats");
+  let qArgs: any[] = [where("userId", "==", id), orderBy("createdAt", "desc")];
+  
+  if (limit) qArgs.push(firestoreLimit(limit));
+  
+  if (startingAfter) {
+    const startDoc = await getDoc(doc(firebaseDb, "chats", startingAfter));
+    if (startDoc.exists()) qArgs.push(startAfter(startDoc));
+  } else if (endingBefore) {
+    const endDoc = await getDoc(doc(firebaseDb, "chats", endingBefore));
+    if (endDoc.exists()) qArgs.push(endBefore(endDoc));
+  }
+  
+  const q = query(chatsRef, ...qArgs);
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(parseDoc<Chat>);
 }
 
 export async function getChatById({ id }: { id: string }) {
-  const data = db.get();
-  return data.chats.find(c => c.id === id) || null;
+  const docRef = await getDoc(doc(firebaseDb, "chats", id));
+  return docRef.exists() ? parseDoc<Chat>(docRef) : null;
 }
 
 export async function saveMessages({ messages }: { messages: DBMessage[] }) {
-  const data = db.get();
-  data.messages.push(...messages);
-  db.set(data);
+  const batch = writeBatch(firebaseDb);
+  for (const msg of messages) {
+    const msgRef = doc(firebaseDb, "messages", msg.id);
+    batch.set(msgRef, { ...msg, createdAt: new Date(msg.createdAt) });
+  }
+  await batch.commit();
 }
 
 export async function getMessagesByChatId({ id }: { id: string }) {
-  const data = db.get();
-  return data.messages.filter(m => m.chatId === id).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  const msgQ = query(collection(firebaseDb, "messages"), where("chatId", "==", id), orderBy("createdAt", "asc"));
+  const snapshot = await getDocs(msgQ);
+  return snapshot.docs.map(parseDoc<DBMessage>);
 }
 
 export async function voteMessage({ chatId, messageId, type }: { chatId: string; messageId: string; type: 'up' | 'down' }) {
-  const data = db.get();
-  const isUpvoted = type === 'up';
-  const existingVoteIndex = data.votes.findIndex(v => v.chatId === chatId && v.messageId === messageId);
-  
-  if (existingVoteIndex > -1) {
-    data.votes[existingVoteIndex].isUpvoted = isUpvoted;
-  } else {
-    data.votes.push({ chatId, messageId, isUpvoted });
-  }
-  db.set(data);
+  const voteId = `${chatId}_${messageId}`;
+  const voteRef = doc(firebaseDb, "votes", voteId);
+  await setDoc(voteRef, {
+    chatId,
+    messageId,
+    isUpvoted: type === 'up'
+  }, { merge: true });
 }
 
 export async function getVotesByChatId({ id }: { id: string }) {
-  const data = db.get();
-  return data.votes.filter(v => v.chatId === id);
+  const voteQ = query(collection(firebaseDb, "votes"), where("chatId", "==", id));
+  const snapshot = await getDocs(voteQ);
+  return snapshot.docs.map(parseDoc<Vote>);
 }
 
 export async function saveDocument({ id, title, kind, content, userId }: { id: string; title: string; kind: "text" | "code" | "image" | "sheet"; content: string; userId: string; }) {
-  const data = db.get();
-  const newDoc: Document = { id, title, kind, content, userId, createdAt: new Date() };
-  
-  const existingIndex = data.documents.findIndex(d => d.id === id);
-  if (existingIndex > -1) {
-    data.documents[existingIndex] = { ...data.documents[existingIndex], ...newDoc };
-  } else {
-    data.documents.push(newDoc);
-  }
-  db.set(data);
+  const docRef = doc(firebaseDb, "documents", id);
+  await setDoc(docRef, {
+    id, title, kind, content, userId, createdAt: new Date()
+  }, { merge: true });
 }
 
 export async function updateDocumentContent({ id, content }: { id: string; content: string }) {
-  const data = db.get();
-  const existingIndex = data.documents.findIndex(d => d.id === id);
-  if (existingIndex > -1) {
-    data.documents[existingIndex].content = content;
-    db.set(data);
-  }
-  return data.documents[existingIndex];
+  const docRef = doc(firebaseDb, "documents", id);
+  await updateDoc(docRef, { content });
+  const updated = await getDoc(docRef);
+  return parseDoc<Document>(updated);
 }
 
 export async function getDocumentById({ id }: { id: string }) {
-  const data = db.get();
-  return data.documents.find(d => d.id === id) || null;
+  const docRef = await getDoc(doc(firebaseDb, "documents", id));
+  return docRef.exists() ? parseDoc<Document>(docRef) : null;
 }
 
 export async function getDocumentsById({ id }: { id: string }) {
-  const data = db.get();
-  return data.documents.filter(d => d.id === id);
+  const docQ = query(collection(firebaseDb, "documents"), where("id", "==", id));
+  const snapshot = await getDocs(docQ);
+  return snapshot.docs.map(parseDoc<Document>);
 }
 
 export async function deleteDocumentsByIdAfterTimestamp({ id, timestamp }: { id: string; timestamp: Date }) {
-  const data = db.get();
-  data.documents = data.documents.filter(d => !(d.id === id && new Date(d.createdAt) > new Date(timestamp)));
-  db.set(data);
+  const docQ = query(collection(firebaseDb, "documents"), where("id", "==", id), where("createdAt", ">", new Date(timestamp)));
+  const snapshot = await getDocs(docQ);
+  const batch = writeBatch(firebaseDb);
+  snapshot.docs.forEach((d) => batch.delete(d.ref));
+  await batch.commit();
 }
 
 export async function saveSuggestions({ suggestions }: { suggestions: Suggestion[] }) {
-  const data = db.get();
-  data.suggestions.push(...suggestions);
-  db.set(data);
+  const batch = writeBatch(firebaseDb);
+  for (const sug of suggestions) {
+    batch.set(doc(firebaseDb, "suggestions", sug.id), sug);
+  }
+  await batch.commit();
 }
 
 export async function getSuggestionsByDocumentId({ documentId }: { documentId: string }) {
-  const data = db.get();
-  return data.suggestions.filter(s => s.documentId === documentId);
+  const sugQ = query(collection(firebaseDb, "suggestions"), where("documentId", "==", documentId));
+  const snapshot = await getDocs(sugQ);
+  return snapshot.docs.map(parseDoc<Suggestion>);
 }
 
 export async function getSuggestionById({ id }: { id: string }) {
-  const data = db.get();
-  return data.suggestions.find(s => s.id === id) || null;
+  const sugRef = await getDoc(doc(firebaseDb, "suggestions", id));
+  return sugRef.exists() ? parseDoc<Suggestion>(sugRef) : null;
 }
 
 export async function deleteMessagesByChatIdAfterTimestamp({ chatId, timestamp }: { chatId: string; timestamp: Date }) {
-  const data = db.get();
-  data.messages = data.messages.filter(m => !(m.chatId === chatId && new Date(m.createdAt) > new Date(timestamp)));
-  db.set(data);
+  const msgQ = query(collection(firebaseDb, "messages"), where("chatId", "==", chatId), where("createdAt", ">", new Date(timestamp)));
+  const snapshot = await getDocs(msgQ);
+  const batch = writeBatch(firebaseDb);
+  snapshot.docs.forEach((d) => batch.delete(d.ref));
+  await batch.commit();
 }
 
 export async function getMessageById({ id }: { id: string }) {
-  const data = db.get();
-  return data.messages.find(m => m.id === id) || null;
+  const msgRef = await getDoc(doc(firebaseDb, "messages", id));
+  return msgRef.exists() ? parseDoc<DBMessage>(msgRef) : null;
 }
 
 export async function updateChatTitleById({ id, title }: { id: string; title: string }) {
-  const data = db.get();
-  const chatIndex = data.chats.findIndex(c => c.id === id);
-  if (chatIndex > -1) {
-    data.chats[chatIndex].title = title;
-    db.set(data);
-  }
+  const chatRef = doc(firebaseDb, "chats", id);
+  await updateDoc(chatRef, { title });
 }
 
 export async function updateChatVisibilityById({ id, visibility }: { id: string; visibility: 'private' | 'public' }) {
-  const data = db.get();
-  const chatIndex = data.chats.findIndex(c => c.id === id);
-  if (chatIndex > -1) {
-    data.chats[chatIndex].visibility = visibility;
-    db.set(data);
-  }
+  const chatRef = doc(firebaseDb, "chats", id);
+  await updateDoc(chatRef, { visibility });
 }
 
 export async function createStreamId({ chatId }: { chatId: string }) {
-  const data = db.get();
   const id = Math.random().toString(36).substring(7);
-  data.streams = data.streams || [];
-  data.streams.push({ id, chatId, createdAt: new Date() });
-  db.set(data);
+  await setDoc(doc(firebaseDb, "streams", id), {
+    id, chatId, createdAt: new Date()
+  });
   return id;
 }
 
 export async function getMessageCountByUserId({ id }: { id: string }) {
-  const data = db.get();
-  const userChats = data.chats.filter(c => c.userId === id).map(c => c.id);
-  const userMessages = data.messages.filter(m => userChats.includes(m.chatId));
-  return userMessages.length;
+  const chatsQ = query(collection(firebaseDb, "chats"), where("userId", "==", id));
+  const chatsSnap = await getDocs(chatsQ);
+  const chatIds = chatsSnap.docs.map(d => d.id);
+  
+  if (chatIds.length === 0) return 0;
+  
+  let totalMessages = 0;
+  for (let i = 0; i < chatIds.length; i += 10) {
+    const chunk = chatIds.slice(i, i + 10);
+    const msgQ = query(collection(firebaseDb, "messages"), where("chatId", "in", chunk));
+    const msgSnap = await getDocs(msgQ);
+    totalMessages += msgSnap.docs.length;
+  }
+  
+  return totalMessages;
 }
 
 export async function updateMessage({ id, parts }: { id: string; parts: any }) {
-  const data = db.get();
-  const index = data.messages.findIndex(m => m.id === id);
-  if (index > -1) {
-    data.messages[index].parts = parts;
-    db.set(data);
-  }
+  const msgRef = doc(firebaseDb, "messages", id);
+  await updateDoc(msgRef, { parts });
 }
 
 export async function deleteAllChatsByUserId({ userId }: { userId: string }) {
-  const data = db.get();
-  const userChatIds = data.chats.filter(c => c.userId === userId).map(c => c.id);
-  data.chats = data.chats.filter(c => c.userId !== userId);
-  data.messages = data.messages.filter(m => !userChatIds.includes(m.chatId));
-  data.votes = data.votes.filter(v => !userChatIds.includes(v.chatId));
-  db.set(data);
+  const chatsQ = query(collection(firebaseDb, "chats"), where("userId", "==", userId));
+  const chatsSnap = await getDocs(chatsQ);
+  
+  for (const docSnapshot of chatsSnap.docs) {
+    await deleteChatById({ id: docSnapshot.id });
+  }
   return { success: true };
 }
