@@ -34,7 +34,16 @@ export async function auth() {
   try {
     // For local dev, bypass admin credential requirement by manually decoding the payload
     const payloadBase64 = token.split('.')[1];
-    const decodedToken = JSON.parse(Buffer.from(payloadBase64, 'base64').toString());
+    
+    // Convert base64url to base64 for atob
+    const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+    
+    // Decode base64 to string (Edge compatible, without using Buffer)
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    
+    const decodedToken = JSON.parse(jsonPayload);
     const isAnonymous = decodedToken.firebase?.sign_in_provider === 'anonymous';
     
     return {
