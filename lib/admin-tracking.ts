@@ -12,6 +12,6 @@ export async function getAdminSettings(): Promise<AdminSettings> {
   };
 }
 
-export async function trackUserActivity() { return; }
-export async function incrementChatCount() { return; }
-export async function updateAdminSettings() { return false; }
+export async function trackUserActivity(data: any) { return; }
+export async function incrementChatCount(userId: string) { return; }
+export async function updateAdminSettings(settings: Partial<AdminSettings>) { return false; }
