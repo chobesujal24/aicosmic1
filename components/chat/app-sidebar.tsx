@@ -109,7 +109,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                   >
                     <Link href="/" onClick={closeMobile}>
                       <div className="flex size-6 items-center justify-center">
-                        <img src="/logo.png" alt="Qyvera AI Logo" className="size-5 invert dark:invert-0 mix-blend-multiply dark:mix-blend-screen" />
+                        <img src="/logo.png" alt="Qyvera AI Logo" className="size-5 invert dark:invert-0" />
                       </div>
                     </Link>
                   </SidebarMenuButton>
