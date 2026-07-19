@@ -471,7 +471,7 @@ function AboutSettings() {
 
       <div className="rounded-2xl border border-border/30 p-6 text-center">
         <div className="mx-auto mb-4 flex size-16 items-center justify-center">
-          <img src="/logo.png" alt="Qyvera AI" className="size-10 invert dark:invert-0 mix-blend-multiply dark:mix-blend-screen" />
+          <img src="/logo.png" alt="Qyvera AI" className="size-10 object-contain invert dark:invert-0" />
         </div>
         <h3 className="text-lg font-bold text-foreground">Qyvera AI</h3>
         <p className="mt-1 text-sm text-muted-foreground">Version 1.0.0</p>

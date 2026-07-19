@@ -9,7 +9,7 @@ export const Greeting = () => (
       initial={{ opacity: 0, scale: 0.8 }}
       transition={{ delay: 0.2, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
     >
-      <img src="/logo.png" alt="Qyvera AI" className="size-16 invert dark:invert-0" />
+      <img src="/logo.png" alt="Qyvera AI" className="size-16 object-contain invert dark:invert-0" />
     </motion.div>
     <motion.div
       animate={{ opacity: 1, y: 0 }}

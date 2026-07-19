@@ -60,7 +60,7 @@ export default function Page() {
           <img
             src="/logo.png"
             alt="Qyvera AI"
-            className="size-16 invert dark:invert-0 mix-blend-multiply dark:mix-blend-screen"
+            className="size-16 object-contain invert dark:invert-0"
           />
         </div>
         <h1

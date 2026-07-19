@@ -41,7 +41,7 @@ function PureChatHeader({
         href="/"
       >
         <div className="flex size-6 items-center justify-center">
-          <img src="/logo.png" alt="Qyvera AI" className="size-5 invert dark:invert-0 mix-blend-multiply dark:mix-blend-screen" />
+          <img src="/logo.png" alt="Qyvera AI" className="size-5 object-contain invert dark:invert-0" />
         </div>
         <span className="text-sm font-semibold text-foreground tracking-tight" style={{ fontFamily: "'SF Pro Display', 'Inter', system-ui, sans-serif", letterSpacing: '-0.02em' }}>
           Qyvera AI
