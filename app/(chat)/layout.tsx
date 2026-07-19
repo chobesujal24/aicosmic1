@@ -10,8 +10,6 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { CanvasProvider } from "@/hooks/use-canvas";
 import { auth } from "@/lib/auth";
 
-export const runtime = 'nodejs';
-
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <>
