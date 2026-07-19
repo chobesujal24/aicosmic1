@@ -44,8 +44,15 @@ import {
   AlertDialogTitle,
 } from "../ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import dynamic from "next/dynamic";
 import { SettingsDialog } from "./settings-dialog";
-import { AdminPanel, useAdminAuth } from "./admin-panel";
+import { isAdminUser } from "@/lib/firebase";
+
+// Dynamically import AdminPanel to completely prevent the Firebase Client SDK (firestore)
+// from evaluating on the Next.js server, which can cause fatal SSR crashes on Vercel.
+const AdminPanel = dynamic(() => import("./admin-panel").then(mod => mod.AdminPanel), { 
+  ssr: false 
+});
 
 export function AppSidebar({ user }: { user: User | undefined }) {
   const router = useRouter();
@@ -54,7 +61,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
-  const { isAdmin } = useAdminAuth();
+  const isAdmin = isAdminUser(user?.email);
 
   const closeMobile = useCallback(() => {
     setOpenMobile(false);

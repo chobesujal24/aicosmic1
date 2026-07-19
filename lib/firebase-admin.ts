@@ -36,7 +36,12 @@ export async function auth() {
     const payloadBase64 = token.split('.')[1];
     
     // Convert base64url to base64 for atob
-    const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+    let base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+    
+    // Add padding because atob is strict
+    while (base64.length % 4) {
+      base64 += '=';
+    }
     
     // Decode base64 to string (Edge compatible, without using Buffer)
     const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
