@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { auth } from "@/lib/firebase-admin";
+import { auth } from "@/lib/auth";
 import type { ArtifactKind } from "@/components/chat/artifact";
 import {
   deleteDocumentsByIdAfterTimestamp,

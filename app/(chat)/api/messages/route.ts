@@ -1,4 +1,4 @@
-import { auth } from "@/lib/firebase-admin";
+import { auth } from "@/lib/auth";
 import { getChatById, getMessagesByChatId } from "@/lib/db/queries";
 import { convertToUIMessages } from "@/lib/utils";
 

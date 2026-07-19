@@ -2,7 +2,7 @@
 
 import type { UIMessage } from "ai";
 import { cookies } from "next/headers";
-import { auth } from "@/lib/firebase-admin";
+import { auth } from "@/lib/auth";
 import type { VisibilityType } from "@/components/chat/visibility-selector";
 import {
   deleteMessagesByChatIdAfterTimestamp,

@@ -8,7 +8,7 @@ import { DataStreamProvider } from "@/components/chat/data-stream-provider";
 import { ChatShell } from "@/components/chat/shell";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { CanvasProvider } from "@/hooks/use-canvas";
-import { auth } from "@/lib/firebase-admin";
+import { auth } from "@/lib/auth";
 
 export const runtime = 'nodejs';
 

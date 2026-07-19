@@ -2,7 +2,7 @@ import { ipAddress } from "@vercel/functions";
 import { generateId } from "ai";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
-import { auth } from "@/lib/firebase-admin";
+import { auth } from "@/lib/auth";
 import { entitlementsByUserType, type UserType } from "@/lib/ai/entitlements";
 import {
   allowedModelIds,

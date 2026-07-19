@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { auth } from "@/lib/firebase-admin";
+import { auth } from "@/lib/auth";
 import { deleteAllChatsByUserId, getChatsByUserId } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
 
